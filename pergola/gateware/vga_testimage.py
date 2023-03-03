@@ -1,7 +1,7 @@
 from nmigen import *
 
 class CustomImageGenerator(Elaboratable):
-    def __init__(self, vsync, v_ctr, h_ctr, r, g, b, active):
+    def __init__(self, vsync, v_ctr, h_ctr, r, g, b, active, fname):
         self.vsync = vsync
         self.v_ctr = v_ctr
         self.h_ctr = h_ctr
@@ -9,6 +9,9 @@ class CustomImageGenerator(Elaboratable):
         self.g = g
         self.b = b
         self.active = active
+
+        with open(fname, 'r') as file:
+          self.verilog = file.read()
 
     def elaborate(self, platform):
         m = Module()
@@ -27,10 +30,7 @@ class CustomImageGenerator(Elaboratable):
             o_out_clock = out_clock,
             i_clock = ClockSignal("sync")
         )
-        print("file", __file__)
-        with open('./build/framegen.v', 'r') as file:
-          filecontents = file.read()
-        platform.add_file("framegen_added.v", filecontents)
+        platform.add_file("framegen_added.v", self.verilog)
         return m
 
 

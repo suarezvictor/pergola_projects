@@ -140,7 +140,8 @@ class DVIDSignalGeneratorXDR(Elaboratable):
             b=b,
             #width=self.vga_parameters.h_active,
             #height=self.vga_parameters.v_active,
-            active=~blank_r[0]
+            active=~blank_r[0],
+            fname="./build/framegen.v"
             )
 
         # Store output bits in separate registers

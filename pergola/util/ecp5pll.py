@@ -111,7 +111,7 @@ class ECP5PLL(Elaboratable):
     def calc_pll_params(self, input, output):
         if (not self.INPUT_MIN <= input <= self.INPUT_MAX):
             logger.warning("Input clock violates frequency range: {} <= {:.3f} <= {}".format(
-                self.INPUT_MIN, freq, self.INPUT_MAX))
+                self.INPUT_MIN, input, self.INPUT_MAX))
 
         params = {}
         error = float_info.max

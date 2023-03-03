@@ -1,5 +1,39 @@
 from nmigen import *
 
+class CustomImageGenerator(Elaboratable):
+    def __init__(self, vsync, v_ctr, h_ctr, r, g, b, active):
+        self.vsync = vsync
+        self.v_ctr = v_ctr
+        self.h_ctr = h_ctr
+        self.r = r
+        self.g = g
+        self.b = b
+        self.active = active
+
+    def elaborate(self, platform):
+        m = Module()
+        done = Signal()
+        out_clock = Signal()
+        m.submodules.framedisplay = Instance("M_frame_display__display",
+            i_in_pix_x = self.h_ctr,
+            i_in_pix_y = self.v_ctr,
+            i_in_pix_active = self.active,
+            i_in_pix_vblank = self.vsync,
+            o_out_pix_r = self.r,
+            o_out_pix_g = self.g,
+            o_out_pix_b = self.b,
+            o_out_done = done,
+            i_reset = ResetSignal(),
+            o_out_clock = out_clock,
+            i_clock = ClockSignal("sync")
+        )
+        print("file", __file__)
+        with open('./build/framegen.v', 'r') as file:
+          filecontents = file.read()
+        platform.add_file("framegen_added.v", filecontents)
+        return m
+
+
 class StaticTestImageGenerator(Elaboratable):
     def __init__(self, vsync, v_ctr, h_ctr, r, g, b):
         self.vsync = vsync

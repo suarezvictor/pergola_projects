@@ -9,7 +9,7 @@ from nmigen.build.dsl import *
 from .. import Applet
 from ...gateware.vga import VGAOutput, VGAOutputSubtarget, VGAParameters
 from ...gateware.vga2dvid import VGA2DVID
-from ...gateware.vga_testimage import TestImageGenerator, RotozoomImageGenerator
+from ...gateware.vga_testimage import CustomImageGenerator, StaticTestImageGenerator, TestImageGenerator, RotozoomImageGenerator
 from ...util.ecp5pll import ECP5PLL, ECP5PLLConfig
 
 
@@ -128,15 +128,20 @@ class DVIDSignalGeneratorXDR(Elaboratable):
             xdr=xdr
         )
 
-        m.submodules += TestImageGenerator(
+        #m.submodules += StaticTestImageGenerator(
+        #m.submodules += TestImageGenerator(
+        #m.submodules += RotozoomImageGenerator(
+        m.submodules += CustomImageGenerator(
             vsync=vga_output.vs,
             h_ctr=m.submodules.vga.h_ctr,
             v_ctr=m.submodules.vga.v_ctr,
             r=r,
             g=g,
             b=b,
-            width=self.vga_parameters.h_active,
-            height=self.vga_parameters.v_active)
+            #width=self.vga_parameters.h_active,
+            #height=self.vga_parameters.v_active,
+            active=~blank_r[0]
+            )
 
         # Store output bits in separate registers
         #
@@ -313,6 +318,18 @@ dvid_configs = {
             v_active=1080,
         ), 100, 150),
 
+    # clock not exact
+    "1920x1080p50": DVIDParameters(VGAParameters(
+            h_front=88,
+            h_sync=44,
+            h_back=148,
+            h_active=1920,
+            v_front=4,
+            v_sync=5,
+            v_back=36,
+            v_active=1080,
+        ), 100, 125),
+
     "2560x1440p30": DVIDParameters(VGAParameters(
             h_front=48,
             h_sync=32,
@@ -375,6 +392,7 @@ class DVIDApplet(Applet, applet_name="dvid"):
 
     def elaborate(self, platform):
 
+        """ # PERGOLA PMOD2 pinout:
         # PMOD2 pinout:
         # CLK B1/B2
         # D0  C1/C2 (b)
@@ -386,6 +404,15 @@ class DVIDApplet(Applet, applet_name="dvid"):
                     Attrs(IO_TYPE="LVDS", DIFFRESISTOR="100")),
             Resource("pmod2_lvds_clk", 0, Pins("B1", dir="o"),
                     Attrs(IO_TYPE="LVDS", DIFFRESISTOR="100")),
+        ])
+        """
+
+        # HAD Badge DVI:
+        platform.add_resources([
+            Resource("pmod2_lvds", 0, Pins("N19  L20  L16", dir="o"),
+                    Attrs(IO_TYPE="LVDS")), #, DIFFRESISTOR="100"
+            Resource("pmod2_lvds_clk", 0, Pins("P20", dir="o"),
+                    Attrs(IO_TYPE="LVDS")), #, DIFFRESISTOR="100"
         ])
 
         xdr = self.xdr
@@ -404,7 +431,7 @@ class DVIDApplet(Applet, applet_name="dvid"):
             pixel_freq_mhz=dvid_config.pixel_freq_mhz,
             xdr=xdr,
             skip_pll_checks=self.skip_pll_checks,
-            invert_outputs=[0, 0, 1, 1])
+            invert_outputs=[0, 0, 0, 0])
 
         return m
 
